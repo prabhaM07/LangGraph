@@ -29,7 +29,7 @@ def run_travel_agent(user_query: str, pdf_path: Optional[str] = None):
     except Exception as e:
         return None
     
-
+    
 if __name__ == "__main__":
 
     user_query = input(" Enter your travel query: ").strip()
