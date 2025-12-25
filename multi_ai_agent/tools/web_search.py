@@ -1,116 +1,72 @@
-import json
 import os
 from langchain_tavily import TavilySearch
 from langchain_core.tools import tool
-from llm import get_llm
-from utils import content_correction
-from travel_preference import TravelPreference
+from dotenv import load_dotenv
+
+load_dotenv()
 
 @tool
-def search_travel_destinations(user_preferences : TravelPreference):
-    """Search web for travel destinations based on preferences"""
+def search_travel_destinations(query: str) -> str:
+    """Search the web for travel information about destinations, activities, attractions, and tips.
     
+    Args:
+        query: Search query about travel destinations (e.g., 'best places to visit in Finland', 
+               'things to do in Iceland', 'budget hotels in Bangkok')
+    
+    Returns:
+        Web search results with relevant travel information, descriptions, and links
+    """
     try:
-        
         tavily_key = os.getenv("TAVILY_API_KEY")
         if not tavily_key:
-            return {"error": "Tavily API key not found", "destinations": [], "success": False}
+            return "Error: Search service is not configured. Please check API key settings."
         
-        tavily_search = TavilySearch(max_results=5, api_key=tavily_key)
-        llm = get_llm()
+        search = TavilySearch(max_results=3, api_key=tavily_key)  # Reduced to 3 results
+        results = search.invoke(query)
         
-        budget = user_preferences.budget_max
-        activities = user_preferences.activities
-        states = user_preferences.destination_state
-        countries = user_preferences.destination_country
-        month = user_preferences.travel_month
+        # Handle different result formats
+        if not results:
+            return f"No results found for '{query}'. Try rephrasing your search or being more specific."
         
+        # Simple, clean formatting
+        output = f"**Travel Suggestions for '{query}'**\n\n"
         
-        query_parts = ["best travel destinations"]
+        # Process results
+        if isinstance(results, dict):
+            if 'results' in results and isinstance(results['results'], list):
+                for i, item in enumerate(results['results'][:3], 1):
+                    title = item.get('title', f'Suggestion {i}')
+                    content = item.get('content', item.get('snippet', ''))
+                    
+                    # Keep it concise
+                    if len(content) > 200:
+                        content = content[:200] + "..."
+                    
+                    output += f"{i}. **{title}**\n"
+                    if content:
+                        output += f"   {content}\n\n"
+                    else:
+                        output += "\n"
+                        
+        elif isinstance(results, list):
+            for i, item in enumerate(results[:3], 1):
+                if isinstance(item, dict):
+                    title = item.get('title', f'Destination {i}')
+                    content = item.get('content', item.get('description', item.get('snippet', '')))
+                    
+                    if len(content) > 150:
+                        content = content[:150] + "..."
+                    
+                    output += f"{i}. **{title}**\n"
+                    if content:
+                        output += f"   {content}\n\n"
+                    else:
+                        output += "\n"
         
-        if states:
-                query_parts.append(" ".join(states))
-            
-        if countries:
-            query_parts.append(" ".join(countries))
+        # Add one-line practical tip
+        output += "**Tip:** Check visa requirements and weather conditions before planning your trip."
         
-        if month:
-            query_parts.append(f"in {month}")
+        return output
         
-        if activities:
-            query_parts.append(" ".join(activities[:])) 
-        
-        if budget:
-            if budget < 50000:
-                query_parts.append("budget friendly")
-            elif budget < 100000:
-                query_parts.append("moderate budget")
-        
-        search_query = " ".join(query_parts)
-        
-        # Perform search
-        search_results = tavily_search.invoke({"query": search_query})
-        
-        web_search_prompt = f"""Extract travel destinations from these search results.
-
-        User Preferences:
-        - Budget: {budget or 'Any'} rupees
-        - States: {', '.join(states) if states else 'Any'}
-        - Countries: {', '.join(countries) if countries else 'Any'}
-        - Activities: {', '.join(activities) if activities else 'Any'}
-        - Month: {month or 'Any'}
-
-        Search Results:
-        {str(search_results)[:3000]}
-
-        Return ONLY valid JSON with 5-7 destinations:
-        {{
-            "destinations": [
-                {{
-                    "name": "destination name",
-                    "country": "country",
-                    "estimated_cost": 50000,
-                    "description": "brief description",
-                    "activities": ["activity1", "activity2"],
-                    "best_season": "season",
-                    "source_url": "url"
-                }}
-            ]
-        }}
-
-        Rules:
-        - Only include destinations from search results
-        - Match user's region preference
-        - Include realistic costs
-        - Return ONLY JSON
-
-        JSON:"""
-            
-            
-        response = llm.invoke(web_search_prompt)
-        content = response.content.strip()
-        
-        content = content_correction(content)
-            
-        result = json.loads(content.strip())
-        
-        return {
-            "destinations": result.get("destinations", []),
-            "success": True,
-            "source": "web_search",
-            "count": len(result.get("destinations", [])),
-            "search_query": search_query
-        }
-            
     except Exception as e:
-        return {
-            "error": str(e),
-            "destinations": [],
-            "success": False,
-            "source": "error"
-        }
-        
-    
-    
-    
-    
+        return f"Search error: {str(e)}. Please try again or rephrase your query."

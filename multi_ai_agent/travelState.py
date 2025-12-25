@@ -1,21 +1,17 @@
-from langgraph.graph import MessagesState
-from typing import Dict,List,Optional
+from typing import Dict, List, Optional, Annotated
+from langgraph.graph.message import add_messages
+from typing_extensions import TypedDict
 
-from travel_preference import TravelPreference
-
-class TravelState(MessagesState):
-    
-    next_agent: Optional[str] = None
-    task_complete: bool = False
-    user_query: Optional[str] = None
-    pdf_path: Optional[str] = None
-    extracted_data: Optional[Dict] = None
-    db_results: Optional[Dict] = None
-    web_results: Optional[Dict] = None
-    weather_results:Optional[Dict] = None
-    final_result: Optional[Dict] = None
-    user_preferences: Optional[TravelPreference] = None 
-    agent_messages: List[str] = []
-    
-    
-    
+class TravelState(TypedDict):
+    """State for travel agent workflow"""
+    messages: Annotated[list, add_messages]
+    user_query: str
+    pdf_path: Optional[str]
+    extracted_data: Optional[str]
+    web_results: Optional[str]
+    weather_results: Optional[str]
+    news_results: Optional[str]
+    final_result: Optional[str]
+    agent_messages: List[str]
+    next_agent: Optional[str]
+    task_complete: bool
