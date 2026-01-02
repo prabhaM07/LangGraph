@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_2063762a7aa4285eccf9c7e26de16be8 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.css"/>
+</head>
+<body>
+    
+    
+        <div style="position: fixed; top: 10px; left: 50px; 
+                    background-color: white; z-index:9999; font-size:16px; 
+                    border:2px solid #333; border-radius: 8px; padding: 10px 20px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+            <p style="margin:0; font-weight:bold;">
+                🗺️ Multi-Mode Route Map: 
+                <span style="color:green;">●</span> Start → 
+                <span style="color:red;">●</span> Destination
+            </p>
+        </div>
+        
+    
+            <div class="folium-map" id="map_2063762a7aa4285eccf9c7e26de16be8" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_2063762a7aa4285eccf9c7e26de16be8 = L.map(
+                "map_2063762a7aa4285eccf9c7e26de16be8",
+                {
+                    center: [10.78151685, 78.62042366421193],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 5,
+  "zoomControl": true,
+  "preferCanvas": true,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_e6820e9085ca7f31063f29950918553f = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 18,
+  "maxNativeZoom": 18,
+  "noWrap": false,
+  "attribution": "\u0026copy; OpenStreetMap \u0026copy; CARTO",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_e6820e9085ca7f31063f29950918553f.addTo(map_2063762a7aa4285eccf9c7e26de16be8);
+        
+    
+            var marker_0666ff4a30e3a4e1480773f1dd4be950 = L.marker(
+                [13.0836939, 80.270186],
+                {
+}
+            ).addTo(map_2063762a7aa4285eccf9c7e26de16be8);
+        
+    
+            var icon_f90492db80a70edb1f845fe49f27cb6c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_a406d3fce017a9f7f66e0fbce75a70aa = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_c550d024c17d2539c47b2a8a608e8539 = $(`<div id="html_c550d024c17d2539c47b2a8a608e8539" style="width: 100.0%; height: 100.0%;"><b>🟢 START</b><br>Chennai - 600001, TN, India</div>`)[0];
+                popup_a406d3fce017a9f7f66e0fbce75a70aa.setContent(html_c550d024c17d2539c47b2a8a608e8539);
+            
+        
+
+        marker_0666ff4a30e3a4e1480773f1dd4be950.bindPopup(popup_a406d3fce017a9f7f66e0fbce75a70aa)
+        ;
+
+        
+    
+    
+            marker_0666ff4a30e3a4e1480773f1dd4be950.bindTooltip(
+                `<div>
+                     Origin: Chennai - 600001, TN, India
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_0666ff4a30e3a4e1480773f1dd4be950.setIcon(icon_f90492db80a70edb1f845fe49f27cb6c);
+            
+    
+            var marker_33d630cd750852e234c1f3f325e6f62c = L.marker(
+                [8.4793398, 76.97066132842387],
+                {
+}
+            ).addTo(map_2063762a7aa4285eccf9c7e26de16be8);
+        
+    
+            var icon_411af505aebe7a8eef00dbbb63d6d8dd = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "flag",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_c819bcd108ff1543c03c2d1c8c82b3a2 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_47fbc85875fc424a2f848b32256ac7a1 = $(`<div id="html_47fbc85875fc424a2f848b32256ac7a1" style="width: 100.0%; height: 100.0%;"><b>🔴 END</b><br>Sree Kanjipuram Madan Shiva Parvathy Temple Group, Thiruvananthapuram - Nagercoil Highway, Karamana, Thiruvananthapuram - 695002, KL, India</div>`)[0];
+                popup_c819bcd108ff1543c03c2d1c8c82b3a2.setContent(html_47fbc85875fc424a2f848b32256ac7a1);
+            
+        
+
+        marker_33d630cd750852e234c1f3f325e6f62c.bindPopup(popup_c819bcd108ff1543c03c2d1c8c82b3a2)
+        ;
+
+        
+    
+    
+            marker_33d630cd750852e234c1f3f325e6f62c.bindTooltip(
+                `<div>
+                     Destination: Sree Kanjipuram Madan Shiva Parvathy Temple Group, Thiruvananthapuram - Nagercoil Highway, Karamana, Thiruvananthapuram - 695002, KL, India
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_33d630cd750852e234c1f3f325e6f62c.setIcon(icon_411af505aebe7a8eef00dbbb63d6d8dd);
+            
+    
+            var poly_line_17e231d66c5c5d5a58198da38a0543f4 = L.polyline(
+                [[[80.270572, 13.083466], [80.2702, 13.083447]]],
+                {"bubblingMouseEvents": true, "color": "#4285F4", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#4285F4", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.7, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_2063762a7aa4285eccf9c7e26de16be8);
+        
+    
+        var popup_4af3d46aaeccb1eb4d4238e41e41c5ef = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_30d05c7486450890c587d8341a136843 = $(`<div id="html_30d05c7486450890c587d8341a136843" style="width: 100.0%; height: 100.0%;"><b>Driving</b></div>`)[0];
+                popup_4af3d46aaeccb1eb4d4238e41e41c5ef.setContent(html_30d05c7486450890c587d8341a136843);
+            
+        
+
+        poly_line_17e231d66c5c5d5a58198da38a0543f4.bindPopup(popup_4af3d46aaeccb1eb4d4238e41e41c5ef)
+        ;
+
+        
+    
+    
+            poly_line_17e231d66c5c5d5a58198da38a0543f4.bindTooltip(
+                `<div>
+                     Driving
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            map_2063762a7aa4285eccf9c7e26de16be8.fitBounds(
+                [[13.0836939, 80.270186], [8.4793398, 76.97066132842387]],
+                {"padding": [50, 50]}
+            );
+        
+    
+            L.control.fullscreen(
+                {
+  "position": "topright",
+  "title": "Full Screen",
+  "titleCancel": "Exit Full Screen",
+  "forceSeparateButton": true,
+}
+            ).addTo(map_2063762a7aa4285eccf9c7e26de16be8);
+        
+</script>
+</html>

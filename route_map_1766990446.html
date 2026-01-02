@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_9677b64e8b5eb828db7a014eff870779 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    <script src="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet.fullscreen@3.0.0/Control.FullScreen.css"/>
+</head>
+<body>
+    
+    
+        <div style="position: fixed; top: 10px; left: 50px; 
+                    background-color: white; z-index:9999; font-size:16px; 
+                    border:2px solid #333; border-radius: 8px; padding: 10px 20px;
+                    box-shadow: 0 4px 6px rgba(0,0,0,0.2);">
+            <p style="margin:0; font-weight:bold;">
+                🗺️ Multi-Mode Route Map: 
+                <span style="color:green;">●</span> Start → 
+                <span style="color:red;">●</span> Destination
+            </p>
+        </div>
+        
+    
+            <div class="folium-map" id="map_9677b64e8b5eb828db7a014eff870779" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_9677b64e8b5eb828db7a014eff870779 = L.map(
+                "map_9677b64e8b5eb828db7a014eff870779",
+                {
+                    center: [12.042752700000001, 78.61651425],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 5,
+  "zoomControl": true,
+  "preferCanvas": true,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_aa6783a6e1ac6ecfd1620c51dbbc5079 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 18,
+  "maxNativeZoom": 18,
+  "noWrap": false,
+  "attribution": "\u0026copy; OpenStreetMap \u0026copy; CARTO",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_aa6783a6e1ac6ecfd1620c51dbbc5079.addTo(map_9677b64e8b5eb828db7a014eff870779);
+        
+    
+            var marker_680a4cc4ecf697bc88298dfc536543f1 = L.marker(
+                [13.0836939, 80.270186],
+                {
+}
+            ).addTo(map_9677b64e8b5eb828db7a014eff870779);
+        
+    
+            var icon_8437d9b9494ddd724d86069812af38bf = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "play",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_13e6afc807b012852c0d697c759b89b7 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_651f732daaf11666b23d50cff42255f1 = $(`<div id="html_651f732daaf11666b23d50cff42255f1" style="width: 100.0%; height: 100.0%;"><b>🟢 START</b><br>Chennai - 600001, TN, India</div>`)[0];
+                popup_13e6afc807b012852c0d697c759b89b7.setContent(html_651f732daaf11666b23d50cff42255f1);
+            
+        
+
+        marker_680a4cc4ecf697bc88298dfc536543f1.bindPopup(popup_13e6afc807b012852c0d697c759b89b7)
+        ;
+
+        
+    
+    
+            marker_680a4cc4ecf697bc88298dfc536543f1.bindTooltip(
+                `<div>
+                     Origin: Chennai - 600001, TN, India
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_680a4cc4ecf697bc88298dfc536543f1.setIcon(icon_8437d9b9494ddd724d86069812af38bf);
+            
+    
+            var marker_25d7df3d3bc4f8e70cf8aa8625cf0683 = L.marker(
+                [11.0018115, 76.9628425],
+                {
+}
+            ).addTo(map_9677b64e8b5eb828db7a014eff870779);
+        
+    
+            var icon_38c39acf74d97b92e3f3f9886374576c = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "red",
+  "iconColor": "white",
+  "icon": "flag",
+  "prefix": "fa",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_b19b8e41231330e8ee100d5e4974462e = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_d3bf63e8942427ac0a94288e7f61004b = $(`<div id="html_d3bf63e8942427ac0a94288e7f61004b" style="width: 100.0%; height: 100.0%;"><b>🔴 END</b><br>Coimbatore, TN, India</div>`)[0];
+                popup_b19b8e41231330e8ee100d5e4974462e.setContent(html_d3bf63e8942427ac0a94288e7f61004b);
+            
+        
+
+        marker_25d7df3d3bc4f8e70cf8aa8625cf0683.bindPopup(popup_b19b8e41231330e8ee100d5e4974462e)
+        ;
+
+        
+    
+    
+            marker_25d7df3d3bc4f8e70cf8aa8625cf0683.bindTooltip(
+                `<div>
+                     Destination: Coimbatore, TN, India
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+                marker_25d7df3d3bc4f8e70cf8aa8625cf0683.setIcon(icon_38c39acf74d97b92e3f3f9886374576c);
+            
+    
+            var poly_line_ff81b4fe01114fe57245a64ae3614706 = L.polyline(
+                [[[80.270572, 13.083466], [80.2702, 13.083447]]],
+                {"bubblingMouseEvents": true, "color": "#4285F4", "dashArray": null, "dashOffset": null, "fill": false, "fillColor": "#4285F4", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.7, "smoothFactor": 1.0, "stroke": true, "weight": 4}
+            ).addTo(map_9677b64e8b5eb828db7a014eff870779);
+        
+    
+        var popup_21966bd79b181559074ed31cfc756fb8 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_7ec7acbb18cf7c3f5ed98b2a9ae211ce = $(`<div id="html_7ec7acbb18cf7c3f5ed98b2a9ae211ce" style="width: 100.0%; height: 100.0%;"><b>Driving</b></div>`)[0];
+                popup_21966bd79b181559074ed31cfc756fb8.setContent(html_7ec7acbb18cf7c3f5ed98b2a9ae211ce);
+            
+        
+
+        poly_line_ff81b4fe01114fe57245a64ae3614706.bindPopup(popup_21966bd79b181559074ed31cfc756fb8)
+        ;
+
+        
+    
+    
+            poly_line_ff81b4fe01114fe57245a64ae3614706.bindTooltip(
+                `<div>
+                     Driving
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            map_9677b64e8b5eb828db7a014eff870779.fitBounds(
+                [[13.0836939, 80.270186], [11.0018115, 76.9628425]],
+                {"padding": [50, 50]}
+            );
+        
+    
+            L.control.fullscreen(
+                {
+  "position": "topright",
+  "title": "Full Screen",
+  "titleCancel": "Exit Full Screen",
+  "forceSeparateButton": true,
+}
+            ).addTo(map_9677b64e8b5eb828db7a014eff870779);
+        
+</script>
+</html>

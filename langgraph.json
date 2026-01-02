@@ -1,0 +1,7 @@
+{
+  "dependencies": ["./multi_ai_agent"],
+  "graphs": {
+    "travel_agent": "./studio_wrapper.py:graph"
+  },
+  "env": ".env"
+}

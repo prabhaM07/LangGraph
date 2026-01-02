@@ -1,98 +1,122 @@
-from utils.display import display_results
+import os
+from dotenv import load_dotenv
 from workflow import create_travel_workflow
-import asyncio
+from langchain_core.messages import HumanMessage, ToolMessage
+from langgraph.types import Command
 
-def run_travel_agent(user_query: str, pdf_path: str = None):
-    """Run the travel agent with a user query"""
-    
-    print("\n🌍 Initializing Travel Planning Agent...\n")
-    
-    # Create workflow
+load_dotenv()
+
+
+def display_results(state):
+    print(state.get("final_result", "No result generated"))
+
+
+def run_travel_planner(user_query: str, pdf_path: str = None):
     graph = create_travel_workflow()
-    
-    # Optional: Display graph structure
-    try:
-        mermaid_code = graph.get_graph().draw_mermaid()
-        print("Graph Structure (paste into https://mermaid.live/):")
-        print(mermaid_code)
-        print("\n" + "-"*80 + "\n")
-    except:
-        pass
-    
-    # Initial state
+
     initial_state = {
-        "messages": [],
+        "messages": [HumanMessage(content=user_query)],
         "user_query": user_query,
         "agent_messages": [],
         "task_complete": False,
-        "pdf_path": pdf_path,
+        "pdf_path": pdf_path or "",
         "extracted_data": None,
         "web_results": None,
         "weather_results": None,
-        "news_results": None,
+        "restaurant_results": None,
+        "attraction_results": None,
+        "route_results": None,
         "final_result": None,
-        "next_agent": None
+        "next_agent": None,
+        "human_feedback": None,
+        "human_review_summary": None,
+        "awaiting_human_input": False,
+        "travel_location": None,
+        "travel_dates": None,
     }
-    
+
     try:
-        print("🔄 Processing your travel request...\n")
-        
-        # Run workflow
         config = {"configurable": {"thread_id": "travel_session_001"}}
-        response = asyncio.run(
-            graph.ainvoke(initial_state, config)
-        )        
-        # Display results
-        display_results(response)
-        
-        return response
-        
+
+        result = None
+        for event in graph.stream(initial_state, config, stream_mode="values"):
+            result = event
+
+        if result and result.get("final_result"):
+            print(result["final_result"])
+
+        snapshot = graph.get_state(config)
+
+        query_lower = user_query.lower()
+        is_route_only = any(
+            kw in query_lower
+            for kw in ["route", "direction", "how to get", "travel from"]
+        )
+
+        if is_route_only and not (snapshot.next and "ask_for_images" in snapshot.next):
+            if result.get("messages"):
+                for msg in result["messages"]:
+                    if isinstance(msg, ToolMessage) and msg.name == "plan_route":
+                        print(msg.content)
+                        break
+            return result
+
+        if snapshot.next and "ask_for_images" in snapshot.next:
+            user_response = input("Show destination images? (yes/no): ").strip().lower()
+
+            final_result = None
+            for event in graph.stream(
+                Command(resume=user_response),
+                config,
+                stream_mode="values",
+            ):
+                final_result = event
+
+            if user_response in {"yes", "y", "ok", "okay"}:
+                if final_result and final_result.get("messages"):
+                    for msg in final_result["messages"]:
+                        if isinstance(msg, ToolMessage) and msg.name == "search_images":
+                            print(msg.content)
+                            break
+
+            return final_result
+
+        display_results(result)
+        return result
+
     except Exception as e:
-        print(f"\n❌ Error processing request: {str(e)}")
+        print(f"Error: {e}")
         import traceback
         traceback.print_exc()
         return None
 
 
-def run_interactive():
-    """Run in interactive mode"""
-    
-    print("\n" + "="*80)
-    print("🌍 TRAVEL PLANNING ASSISTANT")
-    print("="*80)
-    print("\nWelcome! I can help you plan your travel with:")
-    print("  • Real-time weather information")
-    print("  • Latest travel news and updates")
-    print("  • Web search for destinations and activities")
-    print("  • PDF brochure analysis for package recommendations")
-    print("\nType 'quit' or 'exit' to end the session.\n")
-    print("="*80 + "\n")
-    
+def interactive_mode():
     while True:
-        user_query = input("You: ").strip()
-        
-        if user_query.lower() in ['quit', 'exit']:
-            print("\n✈️  Happy travels! Goodbye!\n")
+        user_query = input("Query: ").strip()
+        if user_query.lower() in {"quit", "exit"}:
             break
-        
+
         if not user_query:
             continue
-        
-        pdf_path = input("PDF path (press Enter to skip): ").strip()
-        pdf_path = pdf_path if pdf_path else None
-        
-        run_travel_agent(user_query, pdf_path)
-        print("\n")
+
+        pdf_path = input("PDF path (optional): ").strip()
+        pdf_path = pdf_path if pdf_path and os.path.exists(pdf_path) else None
+
+        run_travel_planner(user_query, pdf_path)
 
 
 if __name__ == "__main__":
     import sys
-    
+
+    try:
+        create_travel_workflow()
+    except Exception as e:
+        print(f"Error displaying graph: {e}")
+
     if len(sys.argv) > 1:
-        # Command line mode
         query = sys.argv[1]
         pdf = sys.argv[2] if len(sys.argv) > 2 else None
-        run_travel_agent(query, pdf)
+        run_travel_planner(query, pdf)
     else:
-        # Interactive mode
-        run_interactive()
+        interactive_mode()
