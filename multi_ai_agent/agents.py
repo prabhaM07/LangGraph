@@ -320,6 +320,7 @@ Analyze this query and determine:
         "restaurant_results": None,
         "attraction_results": None,
         "weather_results": None,
+        "trip_planner_called": False,  # NEW: Reset flag for each query
         "agent_messages": state.get("agent_messages", []) + [
             f"→ {next_agent} | Location: {location or 'Not specified'} | {reasoning[:50]}"
         ]
@@ -415,6 +416,7 @@ CRITICAL LOOP PREVENTION:
     
     return {
         "messages": [response],
+        "trip_planner_called": True, 
         "agent_messages": state.get("agent_messages", []) + [f"→ Planning ({plan_type[:30]})"]
     }
 
@@ -552,7 +554,7 @@ DO NOT use any cached data. ALWAYS call the tool with the extracted location."""
 def ask_for_images_node(state: TravelState) -> Command[Literal["images", "__end__"]]:
     """
     Human-in-the-loop node that asks user if they want to see images
-    NOW RUNS AFTER synthesizer has generated the travel plan
+    This node is ONLY called when trip_planner was executed
     Uses LangGraph's interrupt() to pause execution and wait for user response
     """
     # Get location from state
@@ -565,7 +567,6 @@ def ask_for_images_node(state: TravelState) -> Command[Literal["images", "__end_
         question = "Would you like to see photos of the destinations?"
     
     # Use interrupt to pause and ask user
-    # The travel plan has already been generated and displayed by synthesizer
     user_response = interrupt({
         "question": question,
         "location": location,
@@ -580,12 +581,11 @@ def ask_for_images_node(state: TravelState) -> Command[Literal["images", "__end_
         # Check for affirmative responses
         if any(word in response_lower for word in ["yes", "y", "sure", "ok", "okay", "please", "yep", "yeah"]):
             # User wants images - create AIMessage with tool_calls
-            # CRITICAL FIX: Use the exact location string, not a generic query
             search_query = location if (location and location != "Not specified") else "India travel destinations"
             
             tool_call = {
                 "name": "search_images",
-                "args": {"location": search_query, "per_page": 10},  # FIXED: use "location" not "query"
+                "args": {"location": search_query, "per_page": 10},
                 "id": "image_search_001",
                 "type": "tool_call"
             }
@@ -598,12 +598,19 @@ def ask_for_images_node(state: TravelState) -> Command[Literal["images", "__end_
             return Command(
                 goto="images",
                 update={
-                    "messages": [ai_message],  # FIXED: Only add the new AIMessage, not all previous messages
+                    "messages": [ai_message],
                     "agent_messages": state.get("agent_messages", []) + ["✓ User approved images - fetching..."]
                 }
             )
     
-    
+    # User said no or didn't respond properly - go to end
+    return Command(
+        goto="__end__",
+        update={
+            "agent_messages": state.get("agent_messages", []) + ["✓ User declined images or no response"]
+        }
+    )
+
        
 def synthesizer_node(state: TravelState, llm) -> TravelState:
     """
@@ -739,5 +746,3 @@ GENERAL TRIP PLANNING:
         "task_complete": True,
         "agent_messages": state.get("agent_messages", []) + ["✓ Plan generated - ready to ask about images"]
     }
-    
-    

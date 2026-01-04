@@ -50,3 +50,13 @@ def should_continue_after_tools(state: TravelState) -> str:
         return "trip_planner"
 
     return "synthesizer"
+
+
+def route_after_synthesizer(state: TravelState) -> str:
+    
+    trip_planner_called = state.get("trip_planner_called", False)
+    
+    if trip_planner_called:
+        return "ask_for_images"
+    else:
+        return "__end__"

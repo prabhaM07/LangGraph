@@ -17,5 +17,8 @@ class TravelState(TypedDict):
     # Location tracking
     travel_location: Optional[str]
     
+    # Flag to track if trip_planner was called
+    trip_planner_called: Optional[bool]
+    
     # Final output
     final_result: Optional[str]

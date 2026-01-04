@@ -9,6 +9,7 @@ from router import (
     route_after_research_agent,
     route_after_route_planner,
     should_continue_after_tools,
+    route_after_synthesizer,  # NEW: Add this router
 )
 
 from agents import (
@@ -113,11 +114,17 @@ def create_travel_workflow():
         {"trip_planner": "trip_planner", "synthesizer": "synthesizer"},
     )
 
-    workflow.add_edge("synthesizer", "ask_for_images")
+    # NEW: Conditional routing from synthesizer
+    workflow.add_conditional_edges(
+        "synthesizer",
+        route_after_synthesizer,
+        {"ask_for_images": "ask_for_images", "__end__": END},
+    )
+    
     workflow.add_edge("images", END)
 
     memory = MemorySaver()
     return workflow.compile(
-        # checkpoint= 
+        # checkpointer=memory,
         interrupt_before=["ask_for_images"],
     )

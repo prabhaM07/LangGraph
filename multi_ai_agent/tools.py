@@ -196,12 +196,80 @@ def search_images(location: str, per_page: int = 10):
 # RESTAURANT & ATTRACTION TOOLS
 # ============================================================================
 
+import os
+import requests
+from langchain_core.tools import tool
+from typing import Optional
+import time
+
+# ============================================================================
+# API CONFIGURATION
+# ============================================================================
+
 API_KEY = os.getenv("RAPIDAPI_KEY", "13f4222a24msh542b69ec8c57350p1ba58bjsn5b46b8e6d7e9")
 
 HEADERS = {
     "x-rapidapi-key": API_KEY,
     "x-rapidapi-host": "travel-advisor.p.rapidapi.com"
 }
+
+# ============================================================================
+# HELPER FUNCTIONS
+# ============================================================================
+
+def make_api_request_with_retry(url: str, headers: dict, params: dict, max_retries: int = 2, timeout: int = 20):
+    """
+    Make API request with retry logic and better timeout handling
+    
+    Args:
+        url: API endpoint URL
+        headers: Request headers
+        params: Query parameters
+        max_retries: Maximum number of retry attempts
+        timeout: Timeout in seconds
+    
+    Returns:
+        tuple: (success: bool, data: dict or error message)
+    """
+    for attempt in range(max_retries):
+        try:
+            response = requests.get(
+                url, 
+                headers=headers, 
+                params=params, 
+                timeout=timeout
+            )
+            
+            if response.status_code == 200:
+                return True, response.json()
+            elif response.status_code == 429:
+                # Rate limit hit
+                if attempt < max_retries - 1:
+                    wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    return False, "API rate limit exceeded. Please try again later."
+            else:
+                return False, f"API returned status code {response.status_code}"
+                
+        except requests.exceptions.Timeout:
+            if attempt < max_retries - 1:
+                wait_time = 2 ** attempt
+                time.sleep(wait_time)
+                continue
+            else:
+                return False, f"Request timed out after {timeout} seconds. The API is not responding. This may be a temporary issue - please try again."
+                
+        except requests.exceptions.RequestException as e:
+            if attempt < max_retries - 1:
+                time.sleep(1)
+                continue
+            else:
+                return False, f"Network error: {str(e)}"
+    
+    return False, f"Failed after {max_retries} attempts"
+
 
 def convert_price_level(price_level):
     """Convert dollar symbols to descriptive text"""
@@ -211,6 +279,7 @@ def convert_price_level(price_level):
         '$$$$': 'Expensive'
     }
     return price_map.get(price_level, price_level)
+
 
 def find_best_location_match(locations, location_name):
     """Find the best matching location from search results.
@@ -271,6 +340,11 @@ def find_best_location_match(locations, location_name):
     
     return None
 
+
+# ============================================================================
+# TOOLS
+# ============================================================================
+
 @tool
 def get_restaurants(location_name: str, limit: int = 10) -> str:
     """Get restaurants for a specific location.
@@ -296,16 +370,17 @@ def get_restaurants(location_name: str, limit: int = 10) -> str:
             "lang": "en_US"
         }
         
-        search_response = requests.get(search_url, headers=HEADERS, params=search_params, timeout=10)
+        # Use retry mechanism for location search
+        success, result = make_api_request_with_retry(search_url, HEADERS, search_params, max_retries=2, timeout=20)
         
-        if search_response.status_code != 200:
-            return f"Could not find location: {location_name}"
+        if not success:
+            return f"Could not search for location '{location_name}': {result}"
         
-        search_data = search_response.json()
+        search_data = result
         locations = search_data.get('data', [])
         
         if not locations:
-            return f"No location found for '{location_name}'"
+            return f"No location found for '{location_name}'. Please try a different location name or check the spelling."
         
         # Find the best matching location (prefer cities over specific venues)
         best_match = find_best_location_match(locations, location_name)
@@ -332,59 +407,58 @@ def get_restaurants(location_name: str, limit: int = 10) -> str:
             "lang": "en_US"
         }
         
-        rest_response = requests.get(rest_url, headers=HEADERS, params=rest_params, timeout=10)
+        # Use retry mechanism for restaurant search
+        success, result = make_api_request_with_retry(rest_url, HEADERS, rest_params, max_retries=2, timeout=20)
         
-        if rest_response.status_code == 200:
-            rest_data = rest_response.json()
-            restaurants = rest_data.get('data', [])
+        if not success:
+            return f"Could not fetch restaurants for '{location_full_name}': {result}"
+        
+        rest_data = result
+        restaurants = rest_data.get('data', [])
+        
+        if restaurants:
+            result_text = f"**Top {len(restaurants)} restaurants in {location_full_name}"
+            if location_string:
+                result_text += f" ({location_string})"
+            result_text += "**\n\n"
             
-            if restaurants:
-                result = f"**Top {len(restaurants)} restaurants in {location_full_name}"
-                if location_string:
-                    result += f" ({location_string})"
-                result += "**\n\n"
+            for i, r in enumerate(restaurants, 1):
+                name = r.get('name', 'Unknown')
+                rating = r.get('rating', 'N/A')
+                num_reviews = r.get('num_reviews', '')
+                cuisine = r.get('cuisine', [])
+                price_level = r.get('price_level', '')
+                ranking = r.get('ranking_string', '')
+                address = r.get('address', 'N/A')
                 
-                for i, r in enumerate(restaurants, 1):
-                    name = r.get('name', 'Unknown')
-                    rating = r.get('rating', 'N/A')
-                    num_reviews = r.get('num_reviews', '')
-                    cuisine = r.get('cuisine', [])
-                    price_level = r.get('price_level', '')
-                    ranking = r.get('ranking_string', '')
-                    address = r.get('address', 'N/A')
-                    
-                    result += f"{i}. **{name}**\n"
-                    result += f"   Rating: {rating}/5"
-                    if num_reviews:
-                        result += f" ({num_reviews} reviews)"
-                    result += "\n"
-                    
-                    if cuisine:
-                        cuisine_str = ', '.join([c.get('name', '') for c in cuisine[:3]])
-                        result += f"   Cuisine: {cuisine_str}\n"
-                    
-                    # Convert price_level to descriptive text
-                    # NOTE: We skip displaying actual price amounts as they can be inflated
-                    if price_level:
-                        price_description = convert_price_level(price_level)
-                        result += f"   Price Range: {price_description}\n"
-                    
-                    if ranking:
-                        result += f"   {ranking}\n"
-                    
-                    if address != 'N/A':
-                        result += f"   Address: {address}\n"
-                    
-                    result += "\n"
+                result_text += f"{i}. **{name}**\n"
+                result_text += f"   Rating: {rating}/5"
+                if num_reviews:
+                    result_text += f" ({num_reviews} reviews)"
+                result_text += "\n"
                 
-                return result
-            else:
-                return f"No restaurants found for {location_full_name}. The API might have limited data for this location."
+                if cuisine:
+                    cuisine_str = ', '.join([c.get('name', '') for c in cuisine[:3]])
+                    result_text += f"   Cuisine: {cuisine_str}\n"
+                
+                if price_level:
+                    price_description = convert_price_level(price_level)
+                    result_text += f"   Price Range: {price_description}\n"
+                
+                if ranking:
+                    result_text += f"   {ranking}\n"
+                
+                if address != 'N/A':
+                    result_text += f"   Address: {address}\n"
+                
+                result_text += "\n"
+            
+            return result_text
         else:
-            return f"Error fetching restaurants. Status: {rest_response.status_code}"
+            return f"No restaurants found for {location_full_name}. The Travel Advisor API might have limited data for this location."
     
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Unexpected error while fetching restaurants: {str(e)}"
 
 
 @tool
@@ -412,16 +486,17 @@ def get_attractions(location_name: str, limit: int = 10) -> str:
             "lang": "en_US"
         }
         
-        search_response = requests.get(search_url, headers=HEADERS, params=search_params, timeout=10)
+        # Use retry mechanism for location search
+        success, result = make_api_request_with_retry(search_url, HEADERS, search_params, max_retries=2, timeout=20)
         
-        if search_response.status_code != 200:
-            return f"Could not find location: {location_name}"
+        if not success:
+            return f"Could not search for location '{location_name}': {result}"
         
-        search_data = search_response.json()
+        search_data = result
         locations = search_data.get('data', [])
         
         if not locations:
-            return f"No location found for '{location_name}'"
+            return f"No location found for '{location_name}'. Please try a different location name or check the spelling."
         
         # Find the best matching location (prefer cities over specific venues)
         best_match = find_best_location_match(locations, location_name)
@@ -446,52 +521,55 @@ def get_attractions(location_name: str, limit: int = 10) -> str:
             "lang": "en_US"
         }
         
-        attr_response = requests.get(attr_url, headers=HEADERS, params=attr_params, timeout=10)
+        # Use retry mechanism for attractions search
+        success, result = make_api_request_with_retry(attr_url, HEADERS, attr_params, max_retries=2, timeout=20)
         
-        if attr_response.status_code == 200:
-            attr_data = attr_response.json()
-            attractions = attr_data.get('data', [])
+        if not success:
+            return f"Could not fetch attractions for '{location_full_name}': {result}"
+        
+        attr_data = result
+        attractions = attr_data.get('data', [])
+        
+        if attractions:
+            result_text = f"**Top {len(attractions)} attractions in {location_full_name}"
+            if location_string:
+                result_text += f" ({location_string})"
+            result_text += "**\n\n"
             
-            if attractions:
-                result = f"**Top {len(attractions)} attractions in {location_full_name}"
-                if location_string:
-                    result += f" ({location_string})"
-                result += "**\n\n"
+            for i, a in enumerate(attractions, 1):
+                name = a.get('name', 'Unknown')
+                rating = a.get('rating', 'N/A')
+                num_reviews = a.get('num_reviews', '')
+                ranking = a.get('ranking_string', '')
+                description = a.get('description', '')
+                address = a.get('address', 'N/A')
                 
-                for i, a in enumerate(attractions, 1):
-                    name = a.get('name', 'Unknown')
-                    rating = a.get('rating', 'N/A')
-                    num_reviews = a.get('num_reviews', '')
-                    ranking = a.get('ranking_string', '')
-                    description = a.get('description', '')
-                    address = a.get('address', 'N/A')
-                    
-                    result += f"{i}. **{name}**\n"
-                    result += f"   Rating: {rating}/5"
-                    if num_reviews:
-                        result += f" ({num_reviews} reviews)"
-                    result += "\n"
-                    
-                    if ranking:
-                        result += f"   {ranking}\n"
-                    
-                    if description:
-                        desc_short = description[:150] + "..." if len(description) > 150 else description
-                        result += f"   Description: {desc_short}\n"
-                    
-                    if address != 'N/A':
-                        result += f"   Address: {address}\n"
-                    
-                    result += "\n"
+                result_text += f"{i}. **{name}**\n"
+                result_text += f"   Rating: {rating}/5"
+                if num_reviews:
+                    result_text += f" ({num_reviews} reviews)"
+                result_text += "\n"
                 
-                return result
-            else:
-                return f"No attractions found for {location_full_name}. The API might have limited data for this location."
+                if ranking:
+                    result_text += f"   {ranking}\n"
+                
+                if description:
+                    desc_short = description[:150] + "..." if len(description) > 150 else description
+                    result_text += f"   Description: {desc_short}\n"
+                
+                if address != 'N/A':
+                    result_text += f"   Address: {address}\n"
+                
+                result_text += "\n"
+            
+            return result_text
         else:
-            return f"Error fetching attractions. Status: {attr_response.status_code}"
+            return f"No attractions found for {location_full_name}. The Travel Advisor API might have limited data for this location."
     
     except Exception as e:
-        return f"Error: {str(e)}"
+        return f"Unexpected error while fetching attractions: {str(e)}"
+
+
 
 # ============================================================================
 # ROUTE PLANNING TOOL
