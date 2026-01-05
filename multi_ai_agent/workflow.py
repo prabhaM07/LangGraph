@@ -9,7 +9,7 @@ from router import (
     route_after_research_agent,
     route_after_route_planner,
     should_continue_after_tools,
-    route_after_synthesizer,  # NEW: Add this router
+    route_after_synthesizer,  
 )
 
 from agents import (

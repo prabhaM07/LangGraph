@@ -350,7 +350,6 @@ def research_agent_node(state: TravelState, llm_with_tools) -> TravelState:
     
     response = llm_with_tools.invoke(messages)
     
-    # Set next_agent to trip_planner if trip planning
     next_agent = "trip_planner" if is_planning else None
     
     return {
@@ -365,13 +364,10 @@ def trip_planner_node(state: TravelState, llm_with_tools) -> TravelState:
     location = state.get("travel_location")  
     num_days = extract_days_from_query(user_query)
     
-    # Get research data
     research_data = get_research_data(state)
     
-    # Check if get_weather already failed in current query
     weather_failed = has_tool_been_called(state, "get_weather")
     
-    # Determine if we should call get_weather
     should_call_weather = (
         location is not None 
         and location != "None"
@@ -379,13 +375,11 @@ def trip_planner_node(state: TravelState, llm_with_tools) -> TravelState:
         and not weather_failed
     )
     
-    # Planning instruction
     if num_days > 0:
         plan_type = f"{num_days}-day itinerary with Day 1, Day 2 structure"
     else:
         plan_type = "General plan (attractions by category, NO Day 1, Day 2)"
     
-    # Build concise content
     content = f"""Plan trip: {user_query[:80]}
 Location: {location or "Not specified"}
 Days: {num_days if num_days > 0 else "Not specified"}
@@ -465,10 +459,8 @@ def route_planner_node(state: TravelState, llm_with_tools) -> TravelState:
     """
     user_query = get_user_query(state)
     
-    # Extract origin and destination with regex as backup
     import re
     
-    # Try to extract from patterns like "from X to Y"
     from_to_pattern = r'from\s+([a-zA-Z\s]+?)\s+to\s+([a-zA-Z\s]+?)(?:\s|$|,|\.)'
     match = re.search(from_to_pattern, user_query.lower())
     
@@ -488,7 +480,6 @@ TASK: Call the plan_route tool with these EXACT parameters:
 
 Call it NOW using proper tool format."""
     else:
-        # If pattern doesn't match, let LLM extract
         content = f"""Extract route information from this query: "{user_query}"
 
 INSTRUCTIONS:
@@ -525,7 +516,6 @@ def restaurant_suggester_node(state: TravelState, llm_with_tools) -> TravelState
     user_query = get_user_query(state)
     location = state.get("travel_location")
     
-    # CRITICAL: Make it clear the tool MUST be called
     if location:
         content = f"""User wants restaurants in: {location}
 
@@ -550,23 +540,19 @@ DO NOT use any cached data. ALWAYS call the tool with the extracted location."""
         "agent_messages": state.get("agent_messages", []) + ["→ Restaurants"]
     }
 
-
 def ask_for_images_node(state: TravelState) -> Command[Literal["images", "__end__"]]:
     """
     Human-in-the-loop node that asks user if they want to see images
     This node is ONLY called when trip_planner was executed
     Uses LangGraph's interrupt() to pause execution and wait for user response
     """
-    # Get location from state
     location = state.get("travel_location", "the destinations")
     
-    # Create user-friendly question
     if location and location != "Not specified":
         question = f"Would you like to see photos of {location}?"
     else:
         question = "Would you like to see photos of the destinations?"
     
-    # Use interrupt to pause and ask user
     user_response = interrupt({
         "question": question,
         "location": location,
@@ -574,13 +560,10 @@ def ask_for_images_node(state: TravelState) -> Command[Literal["images", "__end_
         "note": "Travel plan has been generated above"
     })
     
-    # Parse user response
     if user_response:
         response_lower = str(user_response).lower().strip()
         
-        # Check for affirmative responses
         if any(word in response_lower for word in ["yes", "y", "sure", "ok", "okay", "please", "yep", "yeah"]):
-            # User wants images - create AIMessage with tool_calls
             search_query = location if (location and location != "Not specified") else "India travel destinations"
             
             tool_call = {
@@ -603,14 +586,12 @@ def ask_for_images_node(state: TravelState) -> Command[Literal["images", "__end_
                 }
             )
     
-    # User said no or didn't respond properly - go to end
     return Command(
         goto="__end__",
         update={
             "agent_messages": state.get("agent_messages", []) + ["✓ User declined images or no response"]
         }
     )
-
        
 def synthesizer_node(state: TravelState, llm) -> TravelState:
     """
@@ -622,7 +603,6 @@ def synthesizer_node(state: TravelState, llm) -> TravelState:
     pdf_data_exists = has_pdf_data(state)
     location = state.get("travel_location", "")
     
-    # Detect query type
     query_lower = user_query.lower()
     if "restaurant" in query_lower or "food" in query_lower or "dining" in query_lower:
         query_type = "restaurant_only"
@@ -637,10 +617,8 @@ def synthesizer_node(state: TravelState, llm) -> TravelState:
     else:
         query_type = "trip_general"
     
-    # Get ONLY tool results from CURRENT query
     current_tool_results = get_tool_results_for_current_query(state)
     
-    # Build tool results section
     tool_results = []
     
     if "get_travel_recommendations" in current_tool_results:
@@ -661,7 +639,6 @@ def synthesizer_node(state: TravelState, llm) -> TravelState:
     if "plan_route" in current_tool_results:
         tool_results.append(f"=== ROUTE ===\n{current_tool_results['plan_route'][:600]}")
     
-    # Build context
     context = f"""User Query: {user_query}
 Location: {location or "Not specified"}
 Query Type: {query_type}
@@ -675,7 +652,6 @@ CRITICAL INSTRUCTIONS:
 - IGNORE any data from different locations
 """
     
-    # Query-type specific instructions
     if query_type == "restaurant_only":
         context += f"""
 RESTAURANT-ONLY QUERY:
@@ -725,7 +701,6 @@ GENERAL TRIP PLANNING:
 - Use web search results provided above
 - Create plan based on search results only"""
     
-    # Day-wise formatting (only for trip planning queries)
     if num_days > 0 and query_type not in ["restaurant_only", "route_only", "weather_only", "accommodation_only"]:
         context += f"\n- Format as {num_days}-day plan with 'Day 1:', 'Day 2:' structure"
     elif query_type not in ["restaurant_only", "route_only", "weather_only", "accommodation_only"]:
@@ -746,3 +721,4 @@ GENERAL TRIP PLANNING:
         "task_complete": True,
         "agent_messages": state.get("agent_messages", []) + ["✓ Plan generated - ready to ask about images"]
     }
+    
